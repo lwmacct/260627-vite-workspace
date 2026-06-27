@@ -10,12 +10,15 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: "src/index.ts",
+      entry: {
+        cli: "src/cli.ts",
+        index: "src/index.ts",
+      },
       formats: ["es"],
-      fileName: "index",
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
-      external: ["node:path", "vite"],
+      external: ["node:child_process", "node:fs", "node:path", "vite"],
     },
   },
 });

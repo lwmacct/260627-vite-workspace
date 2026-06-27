@@ -1,5 +1,6 @@
 import path from "node:path";
-import { defineConfig, mergeConfig, type Alias, type UserConfig, type UserConfigExport } from "vite";
+import fs from "node:fs";
+import { defineConfig, loadConfigFromFile, mergeConfig, type Alias, type UserConfig, type UserConfigExport } from "vite";
 
 export interface ViteWorkspacePackage {
   dedupe?: string[];
@@ -14,12 +15,32 @@ export interface ViteWorkspaceConfigOptions {
   projectRoot?: string;
 }
 
-export function defineViteWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfigExport {
-  const workspaceConfig = createWorkspaceConfig(options);
-  return defineConfig(mergeConfig(workspaceConfig, options.overrides ?? {}) as UserConfig);
+export interface TypeScriptWorkspaceConfigOptions {
+  configFile?: string;
+  outFile?: string;
+  projectRoot?: string;
+  tsconfig?: string;
 }
 
-function createWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfig {
+export interface TypeScriptWorkspaceConfig {
+  compilerOptions: {
+    paths: Record<string, string[]>;
+  };
+  extends: string;
+}
+
+const WORKSPACE_OPTIONS_KEY = "__lwmacctViteWorkspace";
+
+export function defineViteWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfigExport {
+  const workspaceConfig = createViteWorkspaceConfig(options);
+  const config = mergeConfig(workspaceConfig, options.overrides ?? {}) as UserConfig & {
+    [WORKSPACE_OPTIONS_KEY]?: ViteWorkspaceConfigOptions;
+  };
+  config[WORKSPACE_OPTIONS_KEY] = options;
+  return defineConfig(config);
+}
+
+export function createViteWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfig {
   const alias: Alias[] = [];
   const allow = new Set<string>();
   const dedupe = new Set<string>();
@@ -63,6 +84,115 @@ function createWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfig 
   };
 }
 
+export async function loadViteWorkspaceOptions(
+  configFile: string,
+): Promise<ViteWorkspaceConfigOptions> {
+  const loaded = await loadConfigFromFile(
+    { command: "build", mode: "development" },
+    configFile,
+  );
+  const config = loaded?.config as
+    | (UserConfig & { [WORKSPACE_OPTIONS_KEY]?: ViteWorkspaceConfigOptions })
+    | undefined;
+  const options = config?.[WORKSPACE_OPTIONS_KEY] as
+    | ViteWorkspaceConfigOptions
+    | undefined;
+
+  if (!options) {
+    throw new Error(
+      `未在 ${configFile} 中找到 defineViteWorkspaceConfig(...) 配置`,
+    );
+  }
+
+  return options;
+}
+
+export async function createTypeScriptWorkspaceConfig(
+  options: TypeScriptWorkspaceConfigOptions = {},
+): Promise<TypeScriptWorkspaceConfig> {
+  const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+  const configFile = path.resolve(projectRoot, options.configFile ?? "vite.local.ts");
+  const tsconfig = path.resolve(projectRoot, options.tsconfig ?? "tsconfig.app.json");
+  const outFile = path.resolve(
+    projectRoot,
+    options.outFile ?? "node_modules/.tmp/tsconfig.workspace.json",
+  );
+  const workspaceOptions = await loadViteWorkspaceOptions(configFile);
+  const basePaths = readTypeScriptPaths(tsconfig);
+
+  return {
+    extends: toConfigPath(path.relative(path.dirname(outFile), tsconfig)),
+    compilerOptions: {
+      paths: {
+        ...basePaths,
+        ...createTypeScriptPaths(workspaceOptions),
+      },
+    },
+  };
+}
+
+export async function writeTypeScriptWorkspaceConfig(
+  options: TypeScriptWorkspaceConfigOptions = {},
+): Promise<string> {
+  const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+  const outFile = path.resolve(
+    projectRoot,
+    options.outFile ?? "node_modules/.tmp/tsconfig.workspace.json",
+  );
+  const config = await createTypeScriptWorkspaceConfig({
+    ...options,
+    outFile,
+    projectRoot,
+  });
+
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  fs.writeFileSync(`${outFile}.tmp`, `${JSON.stringify(config, null, 2)}\n`);
+  fs.renameSync(`${outFile}.tmp`, outFile);
+  return outFile;
+}
+
+export function createTypeScriptPaths(
+  options: ViteWorkspaceConfigOptions,
+): Record<string, string[]> {
+  const paths: Record<string, string[]> = {};
+
+  for (const pkg of options.packages) {
+    for (const [subpath, target] of Object.entries(pkg.entries)) {
+      const specifier = subpath === "." ? pkg.name : `${pkg.name}/${subpath}`;
+      paths[specifier] = [toConfigPath(path.resolve(pkg.root, target))];
+    }
+  }
+
+  return paths;
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function readTypeScriptPaths(tsconfig: string): Record<string, string[]> {
+  const payload = JSON.parse(fs.readFileSync(tsconfig, "utf8")) as {
+    compilerOptions?: {
+      baseUrl?: string;
+      paths?: Record<string, string[]>;
+    };
+  };
+  const paths = payload.compilerOptions?.paths ?? {};
+  const baseUrl = path.resolve(
+    path.dirname(tsconfig),
+    payload.compilerOptions?.baseUrl ?? ".",
+  );
+  const nextPaths: Record<string, string[]> = {};
+
+  for (const [specifier, targets] of Object.entries(paths)) {
+    nextPaths[specifier] = targets.map((target) =>
+      path.isAbsolute(target) ? toConfigPath(target) : toConfigPath(path.resolve(baseUrl, target)),
+    );
+  }
+
+  return nextPaths;
+}
+
+function toConfigPath(value: string): string {
+  return value.split(path.sep).join(path.posix.sep);
 }

@@ -122,6 +122,52 @@ export default defineViteWorkspaceConfig({
 - `server.fs.allow`：允许 Vite dev server 访问项目外的本地包源码目录。
 - `optimizeDeps.exclude`：避免本地源码包被当作普通依赖预构建。
 
+## TypeScript 本地检查
+
+`vite.local.ts` 默认只影响 Vite。业务项目如果使用 `tsc -b && vite build`，其中 `tsc -b` 不会读取 Vite 配置，也就不会自动使用本地包源码。
+
+需要让 TypeScript 也按 `vite.local.ts` 解析本地包时，可以使用 CLI 生成临时 tsconfig：
+
+```bash
+npx vite-workspace tsconfig
+```
+
+默认会读取：
+
+- workspace 配置：`vite.local.ts`
+- 基础 TypeScript 配置：`tsconfig.app.json`
+- 输出文件：`node_modules/.tmp/tsconfig.workspace.json`
+
+也可以直接运行 workspace-aware typecheck：
+
+```bash
+npx vite-workspace typecheck
+```
+
+推荐业务项目保留正式构建命令，同时增加本地联调命令：
+
+```json
+{
+  "scripts": {
+    "typecheck": "tsc -b",
+    "typecheck:workspace": "vite-workspace typecheck",
+    "build": "tsc -b && vite build",
+    "build:workspace": "vite-workspace typecheck && vite build"
+  }
+}
+```
+
+这样正式 `build` 仍检查已发布依赖契约，`build:workspace` 才检查本地源码 workspace。
+
+CLI 支持显式指定文件：
+
+```bash
+npx vite-workspace typecheck \
+  --config vite.local.ts \
+  --tsconfig tsconfig.app.json \
+  --out node_modules/.tmp/tsconfig.workspace.json
+```
+
 ## 多包联调
 
 新增本地包时，只需要在 `packages` 中追加一项：
