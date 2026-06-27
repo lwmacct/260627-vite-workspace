@@ -1,26 +1,32 @@
 import path from "node:path";
-import type { Alias, UserConfig } from "vite";
+import { defineConfig, mergeConfig, type Alias, type UserConfig, type UserConfigExport } from "vite";
 
-export interface LocalWorkspacePackage {
+export interface ViteWorkspacePackage {
   dedupe?: string[];
-  exports: Record<string, string>;
+  entries: Record<string, string>;
   name: string;
   root: string;
 }
 
-export interface LocalWorkspaceConfigOptions {
-  packages: LocalWorkspacePackage[];
-  root?: string;
+export interface ViteWorkspaceConfigOptions {
+  overrides?: UserConfig;
+  packages: ViteWorkspacePackage[];
+  projectRoot?: string;
 }
 
-export function createLocalWorkspaceConfig(options: LocalWorkspaceConfigOptions): UserConfig {
+export function defineViteWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfigExport {
+  const workspaceConfig = createWorkspaceConfig(options);
+  return defineConfig(mergeConfig(workspaceConfig, options.overrides ?? {}) as UserConfig);
+}
+
+function createWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfig {
   const alias: Alias[] = [];
   const allow = new Set<string>();
   const dedupe = new Set<string>();
   const exclude = new Set<string>();
 
-  if (options.root) {
-    allow.add(options.root);
+  if (options.projectRoot) {
+    allow.add(options.projectRoot);
   }
 
   for (const pkg of options.packages) {
@@ -31,7 +37,7 @@ export function createLocalWorkspaceConfig(options: LocalWorkspaceConfigOptions)
       dedupe.add(dep);
     }
 
-    for (const [subpath, target] of Object.entries(pkg.exports)) {
+    for (const [subpath, target] of Object.entries(pkg.entries)) {
       const specifier = subpath === "." ? pkg.name : `${pkg.name}/${subpath}`;
 
       alias.push({
