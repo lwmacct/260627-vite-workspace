@@ -144,20 +144,18 @@ npx vite-workspace tsconfig
 npx vite-workspace typecheck
 ```
 
-推荐业务项目保留正式构建命令，同时增加本地联调命令：
+推荐业务项目直接修改主命令，让默认类型检查和构建都使用同一份本地 workspace 解析：
 
 ```json
 {
   "scripts": {
-    "typecheck": "tsc -b",
-    "typecheck:local": "vite-workspace typecheck",
-    "build": "tsc -b && vite build",
-    "build:local": "vite-workspace typecheck && vite build"
+    "typecheck": "vite-workspace typecheck",
+    "build": "vite-workspace typecheck && vite build"
   }
 }
 ```
 
-这样正式 `build` 仍检查已发布依赖契约，`build:local` 才检查本地源码 workspace。
+这样 `typecheck` 和 `vite build` 都按 `vite.local.ts` 指向的本地源码包解析，避免 TypeScript 和 Vite 看到不同版本的包。
 
 CLI 支持显式指定文件：
 
