@@ -147,8 +147,9 @@ export async function writeTypeScriptWorkspaceConfig(
   });
 
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
-  fs.writeFileSync(`${outFile}.tmp`, `${JSON.stringify(config, null, 2)}\n`);
-  fs.renameSync(`${outFile}.tmp`, outFile);
+  const tempFile = `${outFile}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(tempFile, `${JSON.stringify(config, null, 2)}\n`);
+  fs.renameSync(tempFile, outFile);
   return outFile;
 }
 
