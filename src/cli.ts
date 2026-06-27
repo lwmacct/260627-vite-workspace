@@ -65,8 +65,8 @@ function printHelp() {
   console.log(`vite-workspace
 
 Usage:
-  vite-workspace tsconfig [--config vite.local.ts] [--tsconfig tsconfig.app.json] [--out node_modules/.tmp/tsconfig.workspace.json]
-  vite-workspace typecheck [--config vite.local.ts] [--tsconfig tsconfig.app.json] [--out node_modules/.tmp/tsconfig.workspace.json]
+  vite-workspace tsconfig [--config vite.local.ts] [--tsconfig tsconfig.app.json] [--out node_modules/.tmp/tsconfig.local.json]
+  vite-workspace typecheck [--config vite.local.ts] [--tsconfig tsconfig.app.json] [--out node_modules/.tmp/tsconfig.local.json]
 `);
 }
 

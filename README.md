@@ -136,9 +136,9 @@ npx vite-workspace tsconfig
 
 - workspace 配置：`vite.local.ts`
 - 基础 TypeScript 配置：`tsconfig.app.json`
-- 输出文件：`node_modules/.tmp/tsconfig.workspace.json`
+- 输出文件：`node_modules/.tmp/tsconfig.local.json`
 
-也可以直接运行 workspace-aware typecheck：
+也可以直接运行 local workspace typecheck：
 
 ```bash
 npx vite-workspace typecheck
@@ -150,14 +150,14 @@ npx vite-workspace typecheck
 {
   "scripts": {
     "typecheck": "tsc -b",
-    "typecheck:workspace": "vite-workspace typecheck",
+    "typecheck:local": "vite-workspace typecheck",
     "build": "tsc -b && vite build",
-    "build:workspace": "vite-workspace typecheck && vite build"
+    "build:local": "vite-workspace typecheck && vite build"
   }
 }
 ```
 
-这样正式 `build` 仍检查已发布依赖契约，`build:workspace` 才检查本地源码 workspace。
+这样正式 `build` 仍检查已发布依赖契约，`build:local` 才检查本地源码 workspace。
 
 CLI 支持显式指定文件：
 
@@ -165,7 +165,7 @@ CLI 支持显式指定文件：
 npx vite-workspace typecheck \
   --config vite.local.ts \
   --tsconfig tsconfig.app.json \
-  --out node_modules/.tmp/tsconfig.workspace.json
+  --out node_modules/.tmp/tsconfig.local.json
 ```
 
 ## 多包联调

@@ -30,6 +30,7 @@ export interface TypeScriptWorkspaceConfig {
 }
 
 const WORKSPACE_OPTIONS_KEY = "__lwmacctViteWorkspace";
+const DEFAULT_LOCAL_TSCONFIG = "node_modules/.tmp/tsconfig.local.json";
 
 export function defineViteWorkspaceConfig(options: ViteWorkspaceConfigOptions): UserConfigExport {
   const workspaceConfig = createViteWorkspaceConfig(options);
@@ -115,7 +116,7 @@ export async function createTypeScriptWorkspaceConfig(
   const tsconfig = path.resolve(projectRoot, options.tsconfig ?? "tsconfig.app.json");
   const outFile = path.resolve(
     projectRoot,
-    options.outFile ?? "node_modules/.tmp/tsconfig.workspace.json",
+    options.outFile ?? DEFAULT_LOCAL_TSCONFIG,
   );
   const workspaceOptions = await loadViteWorkspaceOptions(configFile);
   const basePaths = readTypeScriptPaths(tsconfig);
@@ -137,7 +138,7 @@ export async function writeTypeScriptWorkspaceConfig(
   const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
   const outFile = path.resolve(
     projectRoot,
-    options.outFile ?? "node_modules/.tmp/tsconfig.workspace.json",
+    options.outFile ?? DEFAULT_LOCAL_TSCONFIG,
   );
   const config = await createTypeScriptWorkspaceConfig({
     ...options,
