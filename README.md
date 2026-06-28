@@ -151,7 +151,6 @@ npx vite-workspace typecheck
 ```json
 {
   "scripts": {
-    "tsconfig:local": "vite-workspace tsconfig --out tsconfig.local.json",
     "typecheck": "vite-workspace typecheck --out tsconfig.local.json",
     "build": "vite build"
   }
