@@ -1,6 +1,6 @@
 {
   "name": "@lwmacct/260627-vite-workspace",
-  "version": "0.9.260628",
+  "version": "0.10.260628",
   "private": false,
   "description": "Vite helpers for local multi-package workspace development.",
   "type": "module",

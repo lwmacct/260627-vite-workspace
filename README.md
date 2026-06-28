@@ -7,8 +7,7 @@
 ## 安装
 
 ```bash
-VERSION="$(curl -s https://api.github.com/repos/lwmacct/260627-vite-workspace/releases/latest | jq -r '.tag_name')"
-npm install --save-dev --save-exact "https://github.com/lwmacct/260627-vite-workspace/releases/download/${VERSION}/package.tar.gz"
+npm install @lwmacct/260627-vite-workspace -D
 ```
 
 ## 配置 .gitignore
