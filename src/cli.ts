@@ -27,7 +27,7 @@ async function main() {
   if (command === "typecheck") {
     const outFile = await writeTypeScriptWorkspaceConfig(options);
     const tsc = path.resolve(process.cwd(), "node_modules/.bin/tsc");
-    const result = spawnSync(tsc, ["-p", outFile], {
+    const result = spawnSync(tsc, ["-p", outFile, "--noEmit"], {
       shell: process.platform === "win32",
       stdio: "inherit",
     });

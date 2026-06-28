@@ -17,6 +17,7 @@ npm install --save-dev --save-exact "https://github.com/lwmacct/260627-vite-work
 
 ```gitignore
 vite.local.ts
+tsconfig.local.json
 ```
 
 ## 配置 vite.config.ts
@@ -145,18 +146,19 @@ npx vite-workspace tsconfig
 npx vite-workspace typecheck
 ```
 
-推荐业务项目把类型检查和构建拆开：`typecheck` 使用本地 workspace 解析，`build` 只按当前 Vite 配置打包：
+推荐业务项目保留正式构建命令，同时让日常 `typecheck` 按本地 workspace 解析：
 
 ```json
 {
   "scripts": {
-    "typecheck": "vite-workspace typecheck",
+    "tsconfig:local": "vite-workspace tsconfig --out tsconfig.local.json",
+    "typecheck": "vite-workspace typecheck --out tsconfig.local.json",
     "build": "vite build"
   }
 }
 ```
 
-这样日常 `typecheck` 按 `vite.local.ts` 指向的本地源码包解析，`build` 只负责打包，避免把类型检查策略硬绑到构建命令里。CI 中可以直接调用 `npm run build`，不会依赖被 `.gitignore` 忽略的 `vite.local.ts`。
+这样本地 `npm run typecheck` 会按 `vite.local.ts` 指向的源码包解析；CI 只需要运行 `npm run build`，继续验证已发布依赖能完成正式打包，不依赖被 `.gitignore` 忽略的本地配置。
 
 CLI 支持显式指定文件：
 

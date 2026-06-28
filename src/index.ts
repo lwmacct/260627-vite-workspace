@@ -24,6 +24,7 @@ export interface TypeScriptWorkspaceConfigOptions {
 
 export interface TypeScriptWorkspaceConfig {
   compilerOptions: {
+    noEmit: true;
     paths: Record<string, string[]>;
   };
   extends: string;
@@ -122,8 +123,9 @@ export async function createTypeScriptWorkspaceConfig(
   const basePaths = readTypeScriptPaths(tsconfig);
 
   return {
-    extends: toConfigPath(path.relative(path.dirname(outFile), tsconfig)),
+    extends: toExtendsPath(path.relative(path.dirname(outFile), tsconfig)),
     compilerOptions: {
+      noEmit: true,
       paths: {
         ...basePaths,
         ...createTypeScriptPaths(workspaceOptions),
@@ -197,4 +199,16 @@ function readTypeScriptPaths(tsconfig: string): Record<string, string[]> {
 
 function toConfigPath(value: string): string {
   return value.split(path.sep).join(path.posix.sep);
+}
+
+function toExtendsPath(value: string): string {
+  const configPath = toConfigPath(value);
+  if (
+    configPath.startsWith(".") ||
+    configPath.startsWith("/") ||
+    /^[A-Za-z]:\//.test(configPath)
+  ) {
+    return configPath;
+  }
+  return `./${configPath}`;
 }
