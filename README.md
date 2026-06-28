@@ -151,7 +151,7 @@ npx vite-workspace typecheck
 ```json
 {
   "scripts": {
-    "typecheck": "vite-workspace typecheck --out tsconfig.local.json",
+    "typecheck": "vite-workspace typecheck",
     "build": "vite build"
   }
 }
@@ -164,8 +164,7 @@ CLI 支持显式指定文件：
 ```bash
 npx vite-workspace typecheck \
   --config vite.local.ts \
-  --tsconfig tsconfig.app.json \
-  --out node_modules/.tmp/tsconfig.local.json
+  --tsconfig tsconfig.app.json
 ```
 
 ## 多包联调
